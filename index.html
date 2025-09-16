@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Phonebook - Trie-Powered Contact Manager</title>
+    <meta name="description" content="Advanced phonebook application with voice search, Trie-based fast searching, and modern contact management features.">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-address-book"></i>
+                    <h1>Smart Phonebook</h1>
+                </div>
+                <div class="header-actions">
+                    <button id="import-btn" class="btn-icon" title="Import Contacts">
+                        <i class="fas fa-upload"></i>
+                    </button>
+                    <input type="file" id="import-file" accept=".json" style="display: none;">
+                    
+                    <button id="export-btn" class="btn-icon" title="Export Contacts">
+                        <i class="fas fa-download"></i>
+                    </button>
+                    
+                    <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <div class="layout">
+                <!-- Search Panel -->
+                <aside class="search-panel">
+                    <div class="search-section">
+                        <h2>Search Contacts</h2>
+                        
+                        <div class="search-container">
+                            <div class="search-input-wrapper">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" id="search-input" placeholder="Search by name or number..." class="search-input">
+                                <button id="voice-search-btn" class="voice-btn" title="Voice Search">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                            </div>
+                            
+                            <div id="voice-status" class="voice-status hidden">
+                                <div class="voice-indicator"></div>
+                                <span>Listening...</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Search Suggestions -->
+                        <div id="suggestions" class="suggestions hidden"></div>
+                    </div>
+
+                    <!-- Filter Tags -->
+                    <div class="filter-section">
+                        <h3>Filter by Tags</h3>
+                        <div class="filter-tags">
+                            <button class="filter-tag active" data-filter="all">
+                                All <span class="count" id="count-all">0</span>
+                            </button>
+                            <button class="filter-tag" data-filter="favorites">
+                                <i class="fas fa-star"></i> Favorites <span class="count" id="count-favorites">0</span>
+                            </button>
+                            <button class="filter-tag" data-filter="family">
+                                Family <span class="count" id="count-family">0</span>
+                            </button>
+                            <button class="filter-tag" data-filter="work">
+                                Work <span class="count" id="count-work">0</span>
+                            </button>
+                            <button class="filter-tag" data-filter="friends">
+                                Friends <span class="count" id="count-friends">0</span>
+                            </button>
+                            <button class="filter-tag" data-filter="other">
+                                Other <span class="count" id="count-other">0</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add Contact Button -->
+                    <button id="add-contact-btn" class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        Add New Contact
+                    </button>
+
+                    <!-- Statistics -->
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-number" id="total-contacts">0</div>
+                            <div class="stat-label">Total Contacts</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" id="recent-calls">0</div>
+                            <div class="stat-label">Recent Calls</div>
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Contacts List -->
+                <section class="contacts-section">
+                    <div class="contacts-header">
+                        <h2>Contacts</h2>
+                        <div class="contacts-actions">
+                            <button id="sort-btn" class="btn-secondary" title="Sort Contacts">
+                                <i class="fas fa-sort-alpha-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="contacts-list" class="contacts-list">
+                        <!-- Contacts will be populated here -->
+                    </div>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Floating Add Button (Mobile) -->
+    <button id="fab-add" class="fab">
+        <i class="fas fa-plus"></i>
+    </button>
+
+    <!-- Contact Modal -->
+    <div id="contact-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-title">Add New Contact</h3>
+                <button id="close-modal" class="btn-close">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="contact-form" class="contact-form">
+                <div class="form-group">
+                    <label for="contact-name">Full Name</label>
+                    <input type="text" id="contact-name" name="name" required placeholder="Enter full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-phone">Phone Number</label>
+                    <input type="tel" id="contact-phone" name="phone" required placeholder="+91 98765 43210">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-email">Email (Optional)</label>
+                    <input type="email" id="contact-email" name="email" placeholder="john@example.com">
+                </div>
+                
+                <div class="form-group">
+                    <label for="contact-tag">Tag</label>
+                    <select id="contact-tag" name="tag" required>
+                        <option value="work">Work</option>
+                        <option value="family">Family</option>
+                        <option value="friends">Friends</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Contact</button>
+                    <button type="button" id="cancel-btn" class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Call Modal -->
+    <div id="call-modal" class="modal hidden">
+        <div class="modal-content call-modal-content">
+            <div class="call-avatar">
+                <div id="call-avatar-circle" class="avatar-circle">
+                    <span id="call-initials"></span>
+                </div>
+            </div>
+            
+            <div class="call-info">
+                <h3 id="call-name"></h3>
+                <p id="call-phone"></p>
+            </div>
+            
+            <div class="call-status">
+                <div id="call-state-calling" class="call-state">
+                    <div class="call-icon calling">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <p>Calling...</p>
+                </div>
+                
+                <div id="call-state-connected" class="call-state hidden">
+                    <div class="call-icon connected">
+                        <i class="fas fa-phone"></i>
+                    </div>
+                    <p>Connected</p>
+                    <span id="call-duration">00:00</span>
+                </div>
+                
+                <div id="call-state-ended" class="call-state hidden">
+                    <p>Call Ended</p>
+                    <span id="call-final-duration">Duration: 00:00</span>
+                </div>
+            </div>
+            
+            <div id="call-controls" class="call-controls">
+                <button id="end-call-btn" class="call-btn end-call">
+                    <i class="fas fa-phone-slash"></i>
+                </button>
+                
+                <button id="mute-btn" class="call-btn mute">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                
+                <button id="speaker-btn" class="call-btn speaker">
+                    <i class="fas fa-volume-up"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
